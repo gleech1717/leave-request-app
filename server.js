@@ -1,33 +1,30 @@
 const express = require('express');
 const app = express();
 const PORT = 3000;
+const { sequelize, LeaveRequest } = require('./model');
 
 app.use(express.static('public'));
 app.use(express.json());
 
-let requests = [];
-
-app.get('/api/requests', (req, res) => {
+app.get('/api/requests', async (req, res) => {
+  const requests = await LeaveRequest.findAll();
   res.json(requests);
 });
 
-app.post('/api/requests', (req, res) => {
-  const newRequest = {
-    id: requests.length + 1,
+app.post('/api/requests', async (req, res) => {
+  const newRequest = await LeaveRequest.create({
     name: req.body.name,
-    dates: req.body.dates,
-    status: 'Pending'
-  };
-  requests.push(newRequest);
+    dates: req.body.dates
+  });
   res.status(201).json(newRequest);
 });
 
 // Approve a request
-app.post('/api/requests/:id/approved', (req, res) => {
-  const id = parseInt(req.params.id);
-  const request = requests.find(r => r.id === id);
+app.post('/api/requests/:id/approved', async (req, res) => {
+  const request = await LeaveRequest.findByPk(req.params.id);
   if (request) {
     request.status = 'Approved';
+    await request.save();
     res.json(request);
   } else {
     res.status(404).send('Request not found');
@@ -35,17 +32,18 @@ app.post('/api/requests/:id/approved', (req, res) => {
 });
 
 // Reject a request
-app.post('/api/requests/:id/rejected', (req, res) => {
-  const id = parseInt(req.params.id);
-  const request = requests.find(r => r.id === id);
+app.post('/api/requests/:id/rejected', async (req, res) => {
+  const request = await LeaveRequest.findByPk(req.params.id);
   if (request) {
     request.status = 'Rejected';
+    await request.save();
     res.json(request);
   } else {
     res.status(404).send('Request not found');
   }
 });
 
+sequelize.sync();
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
