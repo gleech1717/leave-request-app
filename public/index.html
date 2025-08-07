@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Leave Request App</title>
+</head>
+<body>
+  <h1>Leave Request Form</h1>
+  <form id="leaveForm">
+    <input type="text" id="name" placeholder="Your Name" required />
+    <input type="text" id="dates" placeholder="Requested Dates" required />
+    <button type="submit">Submit</button>
+  </form>
+
+  <h2>Submitted Requests:</h2>
+  <ul id="requestList"></ul>
+
+  <script>
+    const form = document.getElementById('leaveForm');
+    const list = document.getElementById('requestList');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('name').value;
+      const dates = document.getElementById('dates').value;
+
+      const res = await fetch('/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, dates }),
+      });
+
+      const data = await res.json();
+      list.innerHTML += `<li>
+        ${data.name} requested ${data.dates} — ${data.status}
+        <button onclick="updateStatus(${data.id}, 'Approved')">Approve</button>
+        <button onclick="updateStatus(${data.id}, 'Rejected')">Reject</button>
+      </li>`;
+      form.reset();
+    });
+
+    async function updateStatus(id, status) {
+      const res = await fetch(`/api/requests/${id}/${status.toLowerCase()}`, { method: 'POST' });
+      if (res.ok) {
+        alert(`Request ${status}!`);
+        location.reload(); // reloads the page to show updated status
+      }
+    }
+  </script>
+</body>
+</html>
