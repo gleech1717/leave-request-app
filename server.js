@@ -1,16 +1,18 @@
+const { sequelize, LeaveRequest } = require('./model');
 const express = require('express');
 const app = express();
 const PORT = 3000;
-const { sequelize, LeaveRequest } = require('./model');
 
 app.use(express.static('public'));
 app.use(express.json());
 
+// Get all leave requests
 app.get('/api/requests', async (req, res) => {
   const requests = await LeaveRequest.findAll();
   res.json(requests);
 });
 
+// Create a new leave request
 app.post('/api/requests', async (req, res) => {
   const newRequest = await LeaveRequest.create({
     name: req.body.name,
@@ -43,7 +45,12 @@ app.post('/api/requests/:id/rejected', async (req, res) => {
   }
 });
 
-sequelize.sync();
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
+// Start the server after syncing the database
+async function startServer() {
+  await sequelize.sync();
+  app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+  });
+}
+
+startServer();
